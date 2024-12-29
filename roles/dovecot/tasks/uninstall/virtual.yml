@@ -1,0 +1,52 @@
+---
+
+- name: Recreate dovecot conf.d configuration files
+  notify: Restart dovecot
+  ansible.builtin.template:
+    src: 'conf.d/{{ file }}'
+    dest: '/etc/dovecot/conf.d/{{ file }}'
+    mode: '0644'
+  loop:
+    - 15-mailboxes.conf
+  loop_control:
+    loop_var: file
+  tags: config
+
+- name: Remove virtual folders for each user
+  tags: virtual
+  notify: Restart dovecot
+  ansible.builtin.file:
+    path: '/home/users/{{ user.uid }}/mails/virtual'
+    state: absent
+  with_items:
+    - '{{ users }}'
+    - uid: postmaster
+  loop_control:
+    loop_var: user
+
+- name: Reinstall dovecot AppArmor profiles
+  register: aa_templates
+  when: not mail.virtual_folders.active
+    and
+        mail.fts.active
+  ansible.builtin.template:
+    src: 'apparmor.d/{{ aa_config }}.cf'
+    dest: '/etc/apparmor.d/{{ aa_config }}'
+    mode: '0644'
+  loop:
+    - usr.lib.dovecot.indexer-worker
+  loop_control:
+    loop_var: aa_config
+  tags: apparmor
+
+- name: Activate AppArmor profiles
+  when: aa_templates.changed
+  notify: Restart AppArmor service
+  ansible.builtin.command: >-
+    aa-enforce {{ file }}
+  changed_when: true
+  loop:
+    - usr.lib.dovecot.indexer-worker
+  loop_control:
+    loop_var: file
+  tags: apparmor

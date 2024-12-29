@@ -50,11 +50,20 @@
   ansible.builtin.include_tasks: install/prometheus.yml
   tags: prometheus
 
-- name: Include full text search tasks
+- name: Include install full text search (FTS)
   when: mail.fts.active
   ansible.builtin.include_tasks: install/fts.yml
   tags: fts, apparmor, scripts
 
-- name: Include virtual mailboxes tasks
+- name: Include remove full text search (FTS)
+  when: not mail.fts.active
+  ansible.builtin.include_tasks: uninstall/fts.yml
+  tags: fts, apparmor, scripts
+
+- name: Include virtual mailbox folders tasks
   when: mail.virtual_folders.active
   ansible.builtin.include_tasks: install/virtual.yml
+
+- name: Include virtual mailbox folders tasks
+  when: not mail.virtual_folders.active
+  ansible.builtin.include_tasks: uninstall/virtual.yml

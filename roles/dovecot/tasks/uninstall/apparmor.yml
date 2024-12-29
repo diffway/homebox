@@ -1,6 +1,6 @@
 ---
 
-- name: Install some dovecot AppArmor profile
+- name: Remove dovecot AppArmor profiles
   notify: Restart AppArmor service
   ansible.builtin.file:
     path: /etc/apparmor.d/{{ aa_config }}
@@ -9,7 +9,7 @@
   loop_control:
     loop_var: aa_config
 
-- name: Install dovecot indexer AppArmor profile
+- name: Remove dovecot indexer AppArmor profiles
   notify: Restart AppArmor service
   when: mail.fts.active
   ansible.builtin.file:

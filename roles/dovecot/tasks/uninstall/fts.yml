@@ -25,3 +25,16 @@
   loop: '{{ log_files.files }}'
   loop_control:
     loop_var: file
+
+- name: Deactivate dovecot indexer AppArmor profiles
+  notify: Restart AppArmor service
+  when: not mail.fts.active
+  ansible.builtin.file:
+    path: /etc/apparmor.d/{{ aa_config }}
+    state: absent
+  loop:
+    - usr.lib.dovecot.indexer
+    - usr.lib.dovecot.indexer-worker
+    - usr.local.bin.decode2text
+  loop_control:
+    loop_var: aa_config
